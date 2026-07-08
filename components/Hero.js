@@ -35,6 +35,31 @@ export default function Hero({ onBook }) {
     <section ref={ref} className="section" style={{ minHeight: "100vh" }}>
       <Embers count={30} />
 
+      {/* Mystical energy halo (background layer) */}
+      <motion.div
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: "42%",
+          left: "50%",
+          x: "-50%",
+          y: orbY,
+          scale: orbScale,
+          width: "min(85vw, 850px)",
+          height: "min(85vw, 850px)",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(232, 94, 44, 0.15) 0%, rgba(255, 138, 92, 0.08) 30%, transparent 70%)",
+          filter: "blur(80px)",
+          zIndex: 0,
+        }}
+        animate={{
+          scale: [1, 1.08, 1],
+          opacity: [0.3, 0.5, 0.3]
+        }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      />
+
       {/* Far layer: the glowing orb / temple flame */}
       <motion.div
         aria-hidden
@@ -51,10 +76,10 @@ export default function Hero({ onBook }) {
           background:
             "radial-gradient(circle, var(--glow-a) 0%, var(--glow-b) 34%, transparent 66%)",
           filter: "blur(6px)",
-          zIndex: 0,
+          zIndex: 1,
         }}
       />
-      {/* The orb core */}
+      {/* The orb core with enhanced mystical glow */}
       <motion.div
         aria-hidden
         style={{
@@ -68,11 +93,14 @@ export default function Hero({ onBook }) {
           borderRadius: "50%",
           background: "var(--flame-strong)",
           boxShadow:
-            "0 0 40px 12px var(--glow-core-1), 0 0 120px 40px var(--glow-core-2)",
-          zIndex: 1,
+            "0 0 40px 12px var(--glow-core-1), 0 0 120px 40px var(--glow-core-2), 0 0 200px 60px rgba(255, 138, 92, 0.3)",
+          zIndex: 2,
         }}
-        animate={{ opacity: [0.75, 1, 0.75], scale: [1, 1.25, 1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        animate={{
+          opacity: [0.6, 1, 0.75, 1, 0.6],
+          scale: [1, 1.3, 1.15, 1.35, 1]
+        }}
+        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <motion.div

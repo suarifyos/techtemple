@@ -1,0 +1,26 @@
+name = "tech-temple"
+type = "javascript"
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
+
+main = "wrangler.js"
+
+# Build configuration
+build = { command = "npm run build", cwd = "." }
+
+# Environment configuration
+env = { }
+
+[env.production]
+routes = [
+  { pattern = "tech-temple.com/*", zone_name = "tech-temple.com" }
+]
+
+# Observability
+observability = { enabled = true }
+
+# Analytics Engine
+[analytics]
+enabled = true

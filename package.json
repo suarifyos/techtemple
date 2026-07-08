@@ -6,12 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy": "npm run build && wrangler deploy",
+    "wrangler": "wrangler"
   },
   "dependencies": {
     "framer-motion": "^11.3.19",
     "next": "^14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "wrangler": "^3.52.0"
   }
 }

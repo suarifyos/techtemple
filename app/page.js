@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, useScroll, useSpring } from "framer-motion";
 import CursorGlow from "@/components/CursorGlow";
+import EnergyFlow from "@/components/EnergyFlow";
 import Hero from "@/components/Hero";
 import Philosophy from "@/components/Philosophy";
 import ScrollScrub from "@/components/ScrollScrub";
@@ -28,6 +29,7 @@ export default function Page() {
   return (
     <main className="snap">
       <CursorGlow />
+      <EnergyFlow />
 
       {/* Scroll progress line */}
       <motion.div
