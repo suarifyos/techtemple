@@ -1,0 +1,156 @@
+:root {
+  /* Dark temple (default) */
+  --ink: #0a0a0b;
+  --ink-2: #0f0f12;
+  --stone: #cbc5ba;
+  --stone-dim: #8a857c;
+  /* Torii vermilion — brand accent */
+  --flame: #e85e2c;
+  --flame-strong: #ff7a45;
+  --on-flame: #160b06; /* text on the accent */
+  --line: rgba(203, 197, 186, 0.12);
+
+  /* Atmosphere — swapped per theme */
+  --glow-a: rgba(232, 94, 44, 0.3);
+  --glow-b: rgba(226, 85, 30, 0.1);
+  --glow-core-1: rgba(255, 138, 92, 0.7);
+  --glow-core-2: rgba(232, 94, 44, 0.35);
+  --glow-field: rgba(232, 94, 44, 0.14);
+  --panel: rgba(203, 197, 186, 0.03);
+  --field-bg: rgba(203, 197, 186, 0.04);
+  --backdrop: rgba(4, 4, 5, 0.72);
+  --grain: rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+
+  --serif: "Cormorant Garamond", "Times New Roman", serif;
+  --mono: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+}
+
+/* Sunlit temple — rice paper & bronze */
+[data-theme="light"] {
+  --ink: #f2ede3;
+  --ink-2: #fbf8f1;
+  --stone: #2b2721;
+  --stone-dim: #6f685c;
+  /* Deep torii rust — reads on parchment */
+  --flame: #b23c12;
+  --flame-strong: #c8481c;
+  --on-flame: #fdf6ef; /* light text on the accent */
+  --line: rgba(43, 39, 33, 0.16);
+
+  --glow-a: rgba(196, 74, 30, 0.22);
+  --glow-b: rgba(178, 60, 18, 0.08);
+  --glow-core-1: rgba(196, 78, 32, 0.55);
+  --glow-core-2: rgba(178, 60, 18, 0.28);
+  --glow-field: rgba(178, 60, 18, 0.14);
+  --panel: rgba(43, 39, 33, 0.03);
+  --field-bg: rgba(43, 39, 33, 0.04);
+  --backdrop: rgba(60, 52, 40, 0.42);
+  --grain: rgba(90, 66, 30, 0.16);
+
+  color-scheme: light;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--ink);
+  color: var(--stone);
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* Film grain + vignette overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  background: radial-gradient(
+    120% 100% at 50% 40%,
+    transparent 55%,
+    var(--grain) 100%
+  );
+  mix-blend-mode: multiply;
+}
+
+body {
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--stone-dim);
+}
+
+.flame {
+  color: var(--flame);
+}
+
+/* Sections snap on scroll */
+.snap {
+  scroll-snap-type: y proximity;
+}
+
+.section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh 6vw;
+  scroll-snap-align: start;
+  overflow: hidden;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.display {
+  font-family: var(--serif);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.hairline {
+  height: 1px;
+  background: var(--line);
+  width: 100%;
+}
+
+button {
+  font-family: var(--mono);
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  body {
+    font-size: 18px;
+  }
+  .section {
+    padding: 8vh 7vw;
+  }
+}
