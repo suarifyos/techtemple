@@ -21,7 +21,7 @@ export default function ScrollScrub({
   frameCount = 120,
   src = null,
   videoSrc = null,
-  videoFrameCount = 48,
+  videoFrameCount = 64,
   heightVh = 320,
   eyebrow = "The Ascent",
   captions = ["Scroll to enter.", "The fog begins to clear.", "Form emerges."],
@@ -32,6 +32,9 @@ export default function ScrollScrub({
   const framesRef = useRef([]); // pre-decoded video frames (ImageBitmap/canvas)
   const framesReady = useRef(false);
   const lastCaption = useRef(-1);
+  const targetT = useRef(0); // scroll-derived progress
+  const shownT = useRef(-1); // smoothed progress actually drawn (-1 = unset)
+  const lastRaf = useRef(0); // timestamp of last rAF tick (0 = rAF not running)
   const [captionIndex, setCaptionIndex] = useState(0);
 
   useEffect(() => {
@@ -117,7 +120,13 @@ export default function ScrollScrub({
 
     function update() {
       const t = progress();
-      draw(t);
+      targetT.current = t;
+      // If the rAF ease loop is alive it owns drawing; otherwise (throttled
+      // tab) draw immediately so the scrub still works.
+      if (performance.now() - lastRaf.current > 250) {
+        shownT.current = t;
+        draw(t);
+      }
       const ci = Math.min(captions.length - 1, Math.floor(t * captions.length));
       if (ci !== lastCaption.current) {
         lastCaption.current = ci;
@@ -125,8 +134,27 @@ export default function ScrollScrub({
       }
     }
 
+    // rAF ease: glide the drawn progress toward the scroll target so momentum
+    // scrolling and sparse scroll events don't stutter. (Throttled to ~0 in
+    // background tabs, where update()'s direct draw takes over.)
+    let raf;
+    const ease = () => {
+      lastRaf.current = performance.now();
+      const tgt = targetT.current;
+      if (shownT.current < 0) shownT.current = tgt;
+      shownT.current += (tgt - shownT.current) * 0.2;
+      if (Math.abs(tgt - shownT.current) < 0.0005) shownT.current = tgt;
+      const sec = sectionRef.current;
+      if (sec) {
+        const r = sec.getBoundingClientRect();
+        if (r.bottom > 0 && r.top < window.innerHeight) draw(shownT.current);
+      }
+      raf = requestAnimationFrame(ease);
+    };
+
     update();
     const settle = setTimeout(update, 80);
+    raf = requestAnimationFrame(ease);
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     const obs = new MutationObserver(update);
@@ -138,6 +166,7 @@ export default function ScrollScrub({
     return () => {
       cancelled = true;
       clearTimeout(settle);
+      cancelAnimationFrame(raf);
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
       obs.disconnect();
@@ -166,15 +195,26 @@ export default function ScrollScrub({
     const w = rect.width;
     const h = rect.height;
 
-    // 1) Pre-decoded video frames.
+    // 1) Pre-decoded video frames, with crossfade between adjacent frames so
+    //    scrubbing reads as continuous motion instead of discrete steps.
     const frames = framesRef.current;
     if (videoSrc && framesReady.current && frames.length) {
-      const idx = Math.min(frames.length - 1, Math.max(0, Math.round(t * (frames.length - 1))));
-      const f = frames[idx];
-      if (f) {
+      const exact = Math.min(frames.length - 1, Math.max(0, t * (frames.length - 1)));
+      const i0 = Math.floor(exact);
+      const i1 = Math.min(frames.length - 1, i0 + 1);
+      const frac = exact - i0;
+      const a = frames[i0];
+      const b = frames[i1];
+      if (a) {
         ctx.fillStyle = "#08070a";
         ctx.fillRect(0, 0, w, h);
-        drawImageCover(ctx, f, w, h);
+        ctx.globalAlpha = 1;
+        drawImageCover(ctx, a, w, h);
+        if (b && b !== a && frac > 0.001) {
+          ctx.globalAlpha = frac;
+          drawImageCover(ctx, b, w, h);
+          ctx.globalAlpha = 1;
+        }
         drawLetterbox(ctx, w, h);
         return;
       }
@@ -219,7 +259,7 @@ export default function ScrollScrub({
             zIndex: 1,
             pointerEvents: "none",
             background:
-              "radial-gradient(58% 42% at 50% 48%, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.34) 38%, transparent 68%)",
+              "radial-gradient(72% 52% at 50% 50%, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.38) 42%, transparent 74%)",
           }}
         />
 
