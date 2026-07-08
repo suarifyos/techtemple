@@ -49,6 +49,14 @@ export default function BookingModal({ open, onClose }) {
     };
   }, [open, onClose]);
 
+  // Auto-close after success message shows.
+  useEffect(() => {
+    if (status === "done") {
+      const timer = setTimeout(() => onClose(), 2800);
+      return () => clearTimeout(timer);
+    }
+  }, [status, onClose]);
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const submit = async (e) => {
