@@ -1,26 +1,13 @@
+# Tech Temple — Cloudflare Pages Configuration
+# For Cloudflare Pages (recommended for Next.js)
+# This config is optional — Pages auto-detects Next.js
+
 name = "tech-temple"
-type = "javascript"
-account_id = ""
-workers_dev = true
-route = ""
-zone_id = ""
 
-main = "wrangler.js"
-
-# Build configuration
-build = { command = "npm run build", cwd = "." }
-
-# Environment configuration
-env = { }
+# Pages automatically handles Node.js build output
+# No need to specify build command for Pages — it auto-detects
 
 [env.production]
-routes = [
-  { pattern = "tech-temple.com/*", zone_name = "tech-temple.com" }
-]
-
-# Observability
-observability = { enabled = true }
-
-# Analytics Engine
-[analytics]
-enabled = true
+# Your custom domain
+route = "tech-temple.com/*"
+zone_id = ""  # Set this if using custom domain

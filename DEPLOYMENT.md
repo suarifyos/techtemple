@@ -1,136 +1,123 @@
-# Cloudflare Deployment Guide
+# Cloudflare Pages Deployment Guide
 
-Tech Temple is configured for deployment on Cloudflare Workers using Wrangler.
+Tech Temple is configured for fast, easy deployment on **Cloudflare Pages** (recommended for Next.js).
 
-## Prerequisites
+## Quick Start (Easiest)
 
-1. Cloudflare account (free tier works)
-2. Node.js 18+
-3. Wrangler CLI
-
-## Setup
-
-### 1. Install Wrangler
+### 1. Local Setup
 ```bash
 npm install
+npm run dev
 ```
 
-### 2. Authenticate with Cloudflare
+Visit `http://localhost:3000` to test locally.
+
+### 2. Deploy to Cloudflare Pages
+
+**Option A: Direct from GitHub (Recommended)**
+1. Push code to GitHub
+2. Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
+3. **Pages** → **Create a project** → **Connect to Git**
+4. Select your `tech-temple` repo
+5. Build settings auto-detect Next.js:
+   - Framework: Next.js
+   - Build command: `npm run build`
+   - Build output directory: `.next`
+6. Click **Deploy**
+
+**Option B: CLI Deploy**
 ```bash
-npx wrangler login
+npm install -g wrangler
+wrangler login
+wrangler pages deploy .next
 ```
 
-This will open your browser and authenticate your local environment with Cloudflare.
+## Environment Variables
 
-### 3. Configure Your Domain (Optional)
+Set webhook URL for booking form:
 
-Edit `wrangler.toml` to set your domain:
+1. **GitHub + Pages**: 
+   - Go to Pages project settings
+   - **Environment variables** → Add `BOOKING_WEBHOOK_URL`
 
-```toml
-name = "tech-temple"
-route = "your-domain.com/*"
-zone_id = "your-zone-id"  # Find in Cloudflare dashboard
+2. **CLI**: 
+   ```bash
+   wrangler pages publish .next --env production
+   ```
+
+In your code:
+```javascript
+const webhookUrl = process.env.BOOKING_WEBHOOK_URL || "https://kau.lol/webhook/tech-temple-bookimg";
 ```
 
-Get your zone_id from:
-1. Log in to Cloudflare dashboard
-2. Select your domain
-3. Copy Zone ID from the right sidebar
+## Custom Domain
 
-## Deployment
+1. In Cloudflare Dashboard → Pages → tech-temple
+2. **Custom domains** → Add your domain
+3. Update DNS records as instructed
 
-### Build and Deploy
-```bash
-npm run deploy
-```
+## Production Builds
 
-Or manually:
+Before deploying, ensure build is clean:
 ```bash
 npm run build
-wrangler deploy
 ```
 
-### Deploy to Staging/Preview
+Check output folder:
 ```bash
-wrangler deploy --env production
+ls -la .next/
 ```
 
-## Local Testing
-
-Test locally before deploying:
+Deploy only `.next/` folder (not node_modules):
 ```bash
-npm run dev
+wrangler pages publish .next
+```
+
+## Local Testing Before Deploy
+
+Always test production build locally:
+```bash
+npm run build
+npm start
 ```
 
 Visit `http://localhost:3000`
 
-## Environment Variables
+## Video & Performance
 
-Add secrets for webhook URLs in `wrangler.toml`:
-
-```toml
-[env.production]
-vars = { BOOKING_WEBHOOK_URL = "https://your-webhook-url.com/webhook" }
-```
-
-Or use Wrangler to set secrets:
-```bash
-wrangler secret put BOOKING_WEBHOOK_URL
-```
-
-Access in your code:
-```javascript
-const webhookUrl = process.env.BOOKING_WEBHOOK_URL;
-```
+- Video streaming works great on Cloudflare Pages
+- Free tier includes unlimited bandwidth
+- Edge caching automatically handles `.mp4` files
+- Frame decoding is client-side (no server load)
 
 ## Troubleshooting
 
-### Build Errors
-- Ensure Next.js build succeeds: `npm run build`
-- Check Node.js version: `node --version` (should be 18+)
-
-### Deployment Fails
-- Verify authentication: `wrangler whoami`
-- Check zone_id is correct in `wrangler.toml`
-- Review deploy logs: `wrangler deploy --verbose`
-
-### Workers Limits
-- Free tier: 100k requests/day
-- Timeout: 30 seconds per request (includes video streaming)
-- Memory: Limited, video frame count may need tuning on mobile
-
-## Video Streaming on Cloudflare
-
-The video scrubbing works well on Cloudflare Workers. For optimal performance:
-
-1. **Keep video file small**: Use H.264 codec, 1-2 second duration
-2. **Use Cloudflare Cache**: Add caching headers
-3. **Monitor frame count**: Reduce from 64 to 48 if memory is tight
-
-Add cache headers in your response:
-```javascript
-response.headers.set('Cache-Control', 'public, max-age=3600');
+**Build fails?**
+```bash
+npm run build
 ```
 
-## Advanced: Custom Builds
+Check for errors. Most common: missing env vars.
 
-For production optimization, create a `wrangler-build.js`:
+**Can't access site after deploy?**
+- Check Pages build logs in dashboard
+- Ensure `.next` folder builds successfully
+- Verify DNS if using custom domain
 
-```javascript
-import { build } from "next/dist/build/index";
+**Static assets not loading?**
+- Check `.next/static` folder exists
+- Verify public folder has `/video/hero.mp4`
 
-export default {
-  async build() {
-    await build({
-      dir: ".",
-      minimalMode: true,
-    });
-  },
-};
+## Clean Redeploy
+
+```bash
+rm -rf .next node_modules
+npm install
+npm run build
+wrangler pages publish .next
 ```
 
 ## Support
 
-For issues:
-- Wrangler docs: https://developers.cloudflare.com/workers/
-- Next.js Edge: https://nextjs.org/docs/app/building-your-application/deploying
+- Cloudflare Pages: https://developers.cloudflare.com/pages/
+- Next.js: https://nextjs.org/docs/deployment
