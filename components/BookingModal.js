@@ -32,6 +32,7 @@ export default function BookingModal({ open, onClose }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    phone_number: "",
     date: "",
     topic: "",
   });
@@ -182,6 +183,17 @@ export default function BookingModal({ open, onClose }) {
                       onChange={set("email")}
                       required
                       placeholder="you@company.com"
+                    />
+                  </div>
+                  <div>
+                    <label style={LABEL} htmlFor="bk-phone">Phone (optional)</label>
+                    <input
+                      id="bk-phone"
+                      type="tel"
+                      style={FIELD}
+                      value={form.phone_number}
+                      onChange={set("phone_number")}
+                      placeholder="+1 (555) 123-4567"
                     />
                   </div>
                   <div>

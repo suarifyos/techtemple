@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
+import { site } from "@/lib/site";
 
-// Booking endpoint. Currently logs the request server-side and returns success.
-// To actually deliver bookings, wire one of these in the marked spot below:
-//   - Email:   Resend / Nodemailer / Postmark
-//   - Webhook: Slack / Discord incoming webhook
-//   - Store:   a DB row, Airtable, Google Sheet, etc.
+// Where bookings are delivered. Override with BOOKING_WEBHOOK_URL if needed.
+const WEBHOOK_URL =
+  process.env.BOOKING_WEBHOOK_URL || "https://kau.lol/webhook/tech-temple-bookimg";
+
+// Booking endpoint: validates the form and forwards it to the webhook.
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, email, date, topic } = body ?? {};
+    const { name, email, date, topic, phone_number } = body ?? {};
 
     if (!name || !email || !date || !topic) {
       return NextResponse.json(
@@ -17,25 +18,35 @@ export async function POST(request) {
       );
     }
 
-    // --- WIRE DELIVERY HERE -------------------------------------------------
-    // Example (Slack webhook):
-    //   await fetch(process.env.SLACK_WEBHOOK_URL, {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ text: `New Tech Temple booking from ${name} <${email}> on ${date}: ${topic}` }),
-    //   });
-    // ------------------------------------------------------------------------
-
-    console.log("[tech-temple] booking request:", {
+    // Payload sent to the webhook.
+    const payload = {
+      source: "tech-temple-landing",
+      submittedAt: new Date().toISOString(),
       name,
       email,
-      date,
-      topic,
-      at: new Date().toISOString(),
+      phone_number: phone_number || null, // optional
+      date, // preferred session date (YYYY-MM-DD)
+      topic, // "what haunts you" free text
+      rate: `${site.rate.amount} ${site.rate.unit}`.trim(),
+    };
+
+    const res = await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
 
+    if (!res.ok) {
+      console.error("[tech-temple] webhook failed:", res.status);
+      return NextResponse.json(
+        { ok: false, error: "Could not deliver booking." },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error("[tech-temple] booking error:", err);
     return NextResponse.json(
       { ok: false, error: "Invalid request." },
       { status: 400 }
