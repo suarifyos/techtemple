@@ -4,6 +4,9 @@ export const metadata = {
   title: "Tech Temple — Wisdom, by the hour",
   description:
     "An hour with a techmonk. Architecture, code review, unblocking, and counsel. One honest rate.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }) {
