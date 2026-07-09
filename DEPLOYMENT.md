@@ -1,149 +1,92 @@
 # Cloudflare Pages Deployment Guide
 
-Tech Temple is configured for fast, easy deployment on **Cloudflare Pages** (recommended for Next.js).
+Tech Temple deploys to **Cloudflare Pages** as a static export + one Pages Function.
 
-## Quick Start (Easiest)
+## How it's wired
 
-### 1. Local Setup
+- `next.config.mjs` has `output: "export"` → the whole site builds to `./out` as static HTML/JS.
+- The booking API lives in `functions/api/book.js` — a **Pages Function** that serves
+  `POST /api/book`. (Static exports can't run Next.js route handlers, so the API
+  moved here. The browser still calls `/api/book` exactly as before.)
+- `wrangler.toml` sets `pages_build_output_dir = "out"`.
+
+> ⚠️ Do **not** try to deploy the `.next` folder or use `@cloudflare/next-on-pages`
+> (deprecated). This project uses a plain static export, which is simpler and reliable.
+
+## Local development
+
+Normal Next.js dev (hot reload, but the `/api/book` Function is NOT active here):
 ```bash
 npm install
-npm run dev
+npm run dev            # http://localhost:3000
 ```
 
-Visit `http://localhost:3000` to test locally.
+Test the **real** production output — static site + the `/api/book` Function — exactly
+as Cloudflare will run it:
+```bash
+npm run build          # produces ./out
+npx wrangler pages dev out
+```
+Then open the printed URL (default `http://127.0.0.1:8788`).
 
-### 2. Deploy to Cloudflare Pages
+Verified working locally:
+- `GET /` → 200 (static page)
+- `GET /video/hero.mp4` → 200 `video/mp4`
+- `GET /favicon.svg` → 200 `image/svg+xml`
+- `POST /api/book` (missing fields) → 400
+- `POST /api/book` (valid) → 200 `{ ok: true }` and forwards to the webhook
 
-**Option A: Direct from GitHub (Recommended)**
-1. Push code to GitHub
-2. Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
-3. **Pages** → **Create a project** → **Connect to Git**
-4. Select your `tech-temple` repo
-5. Build settings auto-detect Next.js:
-   - Framework: Next.js
-   - Build command: `npm run build`
-   - Build output directory: `.next`
-6. Click **Deploy**
+## Deploy
 
-**Option B: CLI Deploy** (use `pages publish`, not `deploy`)
+### Option A — Git integration (recommended)
+1. Push to GitHub.
+2. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
+3. Pick the repo. Build settings:
+   - **Build command:** `npm run build`
+   - **Build output directory:** `out`
+4. **Save and Deploy.** Every push auto-deploys; PRs get preview URLs.
+
+### Option B — CLI (Wrangler v4)
 ```bash
 npm run build
-
-# Install wrangler if needed
-npm install -g wrangler
-
-# Authenticate
-wrangler login
-
-# Deploy (IMPORTANT: use "pages publish", not "deploy")
-wrangler pages publish .next
+npx wrangler login
+npx wrangler pages deploy out
 ```
+> In Wrangler v4 the command is `pages deploy` (the old `pages publish` is removed).
 
-## Environment Variables
+## Environment variables
 
-Set webhook URL for booking form:
+The webhook URL defaults to `https://kau.lol/webhook/tech-temple-bookimg`. Override it
+with `BOOKING_WEBHOOK_URL`:
 
-1. **GitHub + Pages**: 
-   - Go to Pages project settings
-   - **Environment variables** → Add `BOOKING_WEBHOOK_URL`
+- **Dashboard:** Pages project → **Settings → Environment variables** → add
+  `BOOKING_WEBHOOK_URL`.
+- **CLI (encrypted secret):**
+  ```bash
+  npx wrangler pages secret put BOOKING_WEBHOOK_URL --project-name tech-temple
+  ```
 
-2. **CLI**: 
-   ```bash
-   wrangler pages publish .next --env production
-   ```
+The Function reads it via `env.BOOKING_WEBHOOK_URL` (see `functions/api/book.js`).
 
-In your code:
-```javascript
-const webhookUrl = process.env.BOOKING_WEBHOOK_URL || "https://kau.lol/webhook/tech-temple-bookimg";
-```
+## Custom domain
 
-## Custom Domain
-
-1. In Cloudflare Dashboard → Pages → tech-temple
-2. **Custom domains** → Add your domain
-3. Update DNS records as instructed
-
-## Production Builds
-
-Before deploying, ensure build is clean:
-```bash
-npm run build
-```
-
-Check output folder:
-```bash
-ls -la .next/
-```
-
-Deploy only `.next/` folder (not node_modules):
-```bash
-wrangler pages publish .next
-```
-
-## Local Testing Before Deploy
-
-Always test production build locally:
-```bash
-npm run build
-npm start
-```
-
-Visit `http://localhost:3000`
-
-## Video & Performance
-
-- Video streaming works great on Cloudflare Pages
-- Free tier includes unlimited bandwidth
-- Edge caching automatically handles `.mp4` files
-- Frame decoding is client-side (no server load)
-
-## ⚠️ Common Mistakes
-
-**Don't do this:**
-```bash
-# ❌ WRONG - This will fail
-wrangler deploy
-```
-
-**Do this instead:**
-```bash
-# ✅ CORRECT - Use pages publish for static assets
-npm run build
-wrangler pages publish .next
-```
-
-The difference:
-- `wrangler deploy` → for Workers (serverless functions)
-- `wrangler pages publish` → for Pages (static + serverless)
+Pages project → **Custom domains** → add your domain and follow the DNS steps.
 
 ## Troubleshooting
 
-**Build fails?**
-```bash
-npm run build
-```
+**Build fails on the API route** — make sure `app/api/` no longer exists; the API is
+now `functions/api/book.js`. A stray `app/api/**/route.js` breaks `output: "export"`.
 
-Check for errors. Most common: missing env vars.
+**`/api/book` returns 404 locally** — you're on `npm run dev` (Next.js only). Use
+`npx wrangler pages dev out` to exercise Pages Functions.
 
-**Can't access site after deploy?**
-- Check Pages build logs in dashboard
-- Ensure `.next` folder builds successfully
-- Verify DNS if using custom domain
+**Video/assets 404 after deploy** — confirm they're in `public/` so they land in `out/`.
+Check `ls out/video/`.
 
-**Static assets not loading?**
-- Check `.next/static` folder exists
-- Verify public folder has `/video/hero.mp4`
+**Wrangler asks about entry-point / "Missing entry-point"** — you ran `wrangler deploy`
+(Workers). Use `wrangler pages deploy out` instead.
 
-## Clean Redeploy
-
-```bash
-rm -rf .next node_modules
-npm install
-npm run build
-wrangler pages publish .next
-```
-
-## Support
-
-- Cloudflare Pages: https://developers.cloudflare.com/pages/
-- Next.js: https://nextjs.org/docs/deployment
+## Reference
+- Pages direct upload: https://developers.cloudflare.com/pages/get-started/direct-upload/
+- Pages Functions: https://developers.cloudflare.com/pages/functions/
+- Next.js static exports: https://nextjs.org/docs/app/building-your-application/deploying/static-exports

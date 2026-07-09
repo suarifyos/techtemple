@@ -1,11 +1,6 @@
 name = "tech-temple"
 compatibility_date = "2026-07-08"
 
-# For Cloudflare Pages - serve .next build output
-[build]
-command = "npm run build"
-cwd = "."
-watch_paths = ["src/**/*.ts", "app/**/*.js"]
-
-[env.production]
-name = "tech-temple-prod"
+# Cloudflare Pages: Next.js static export lands in ./out,
+# and functions/ is picked up automatically as Pages Functions.
+pages_build_output_dir = "out"
