@@ -25,11 +25,18 @@ Visit `http://localhost:3000` to test locally.
    - Build output directory: `.next`
 6. Click **Deploy**
 
-**Option B: CLI Deploy**
+**Option B: CLI Deploy** (use `pages publish`, not `deploy`)
 ```bash
+npm run build
+
+# Install wrangler if needed
 npm install -g wrangler
+
+# Authenticate
 wrangler login
-wrangler pages deploy .next
+
+# Deploy (IMPORTANT: use "pages publish", not "deploy")
+wrangler pages publish .next
 ```
 
 ## Environment Variables
@@ -89,6 +96,25 @@ Visit `http://localhost:3000`
 - Free tier includes unlimited bandwidth
 - Edge caching automatically handles `.mp4` files
 - Frame decoding is client-side (no server load)
+
+## ⚠️ Common Mistakes
+
+**Don't do this:**
+```bash
+# ❌ WRONG - This will fail
+wrangler deploy
+```
+
+**Do this instead:**
+```bash
+# ✅ CORRECT - Use pages publish for static assets
+npm run build
+wrangler pages publish .next
+```
+
+The difference:
+- `wrangler deploy` → for Workers (serverless functions)
+- `wrangler pages publish` → for Pages (static + serverless)
 
 ## Troubleshooting
 

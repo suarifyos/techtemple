@@ -1,11 +1,11 @@
 name = "tech-temple"
-type = "javascript"
-pages_build_output_dir = ".next"
-
-# For local testing only
-main = "wrangler.js"
 compatibility_date = "2026-07-08"
 
+# For Cloudflare Pages - serve .next build output
+[build]
+command = "npm run build"
+cwd = "."
+watch_paths = ["src/**/*.ts", "app/**/*.js"]
+
 [env.production]
-route = "tech-temple.com/*"
-zone_id = ""
+name = "tech-temple-prod"
