@@ -13,6 +13,7 @@ import Proof from "@/components/Proof";
 import Ritual from "@/components/Ritual";
 import BookingModal from "@/components/BookingModal";
 import ThemeToggle from "@/components/ThemeToggle";
+import AudioControl from "@/components/AudioControl";
 import { site } from "@/lib/site";
 
 export default function Page() {
@@ -30,6 +31,7 @@ export default function Page() {
     <main className="snap">
       <CursorGlow />
       <EnergyFlow />
+      <AudioControl />
 
       {/* Scroll progress line */}
       <motion.div
